@@ -122,3 +122,42 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'correlation_id': {
+            '()': 'asgi_correlation_id.CorrelationIdFilter',
+            'uuid_length': 32,
+            'default_value': '',
+        }
+    },
+    'formatters': {
+        'standard': {
+            'format': '%(levelname)-8s [%(asctime)s] [%(correlation_id)s] %(name)s: %(message)s'
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'filters': ['correlation_id'],
+            'formatter': 'standard',
+        },
+    },
+    'loggers': {
+        # 「"GET /polls/ HTTP/1.1" 200 14」のようなログを出すのは Uvicorn なので loggers には設定できない
+        # pollsアプリのログを出力する
+        'polls': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        # SQLのログも出力する
+        'django.db.backends': {
+          'level': 'DEBUG',
+          'handlers': ['console'],
+        },
+    }
+}
